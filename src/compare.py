@@ -28,6 +28,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('A', type=str, help='purpose A for a comparison')
     parser.add_argument('B', type=str, help='purpose B for a comparison')
+    parser.add_argument('-C', '--config-baseline', type=str, help='config section for a comparison', default=None)
     parser.add_argument('-F', '--fragmentation', action='store_true', help='include fragmentation tests')
     
     args = parser.parse_args()
@@ -45,6 +46,13 @@ if __name__ == "__main__":
     age = datetime.date.today() - datetime.timedelta(days=365)
 
     for section in sections:
+        if args.config_baseline:
+            configA = args.config_baseline
+            if configA == section:
+                continue
+        else:
+            configA = section
+        configB = section
         print(f"{section} test results")
         for test in tests:
-            compare_results(session, section, section, test, args.A, args.B, age)
+            compare_results(session, configA, configB, test, args.A, args.B, age)

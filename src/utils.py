@@ -108,15 +108,18 @@ def mkdir_p(path):
         else:
             raise
 
-def run_command(cmd, outputfile=None):
+def run_command(cmd, outputfile=None, fg=True):
     print(f"  running cmd '{cmd}'")
     if not outputfile:
         outputfile = PIPE
     p = Popen(shlex.split(cmd), stdout=outputfile, stderr=outputfile)
-    out, err = p.communicate()
+    if fg:
+        out, err = p.communicate()
     if p.returncode:
         print(f"{cmd} failed. out: {out}, err: {err}")
         raise CalledProcessError(p.returncode, cmd)
+    if not fg:
+        return p
 
 def setup_cpu_governor(config):
     if not config.has_option('main', 'cpugovernor'):
@@ -212,11 +215,11 @@ class LatencyTracing:
         os.environ["BPFTRACE_MAP_KEYS_MAX"] = "65536"
         kprobe = f"kprobe:{fn} {{ @start[tid] = nsecs; }}"
         kretprobe = f"kretprobe:{fn} {{ if(@start[tid]) {{ $delay = nsecs - @start[tid]; @delays[$delay]++; }} delete(@start[tid]); }}"
-        end = "END { clear(@start); }"
-        self.ps[fn] = Popen(["bpftrace", "-e", f"{kprobe} {kretprobe} {end}"], text=True, stdout=PIPE, stderr=PIPE)
+        self.ps[fn] = Popen(["bpftrace", "-e", f"{kprobe} {kretprobe}"], text=True, stdout=PIPE, stderr=PIPE)
 
     def collect_latency_trace(self, fn):
         bt_p = self.ps[fn]
+        print(f"signalling bpftrace for {fn}")
         bt_p.send_signal(signal.SIGINT)
         # ignore errors in latency tracing; better to let the whole run still complete.
         try:
