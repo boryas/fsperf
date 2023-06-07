@@ -6,20 +6,28 @@ import utils
 NR_SNAPS = 100
 NR_FILES = 1000
 
-class UnshareVictim(FioTest):
-    name = "unsharevictim"
-    command = ("--name unsharevictim --rw=randwrite --fsync=1 "
+# Run in a bunch of fsynced random writes in parallel with writes that
+# unshare snapshotted files, and measure the effect on the performance
+# of the normal writes.
+class UnshareSideEffect(FioTest):
+    name = "unsharesideeffect"
+    command = ("--name unsharesideeffect --rw=randwrite --fsync=1 "
                "--nrfiles=1000 --filesize=128k "
                "--ioengine=psync --bs=4k")
 
     def __init__(self):
         self.bg_fios = {}
 
+    def get_directory(self, config):
+        directory = config.get('main', 'directory')
+        return os.path.join(directory, 'victim')
+
     def setup(self, config, section):
         directory = config.get('main', 'directory')
         subv = os.path.join(directory, 'subv')
-        victim = os.path.join(directory, 'victim')
+        victim = self.get_directory(config)
         utils.run_command(f'btrfs subvolume create {subv}')
+        utils.run_command(f'btrfs subvolume create {victim}')
 
         # fill out the subvolume
         utils.run_command(f'fio --name prep --directory={subv} --rw=write --ioengine=psync --bs=4k --filesize=128k --nrfiles={NR_FILES}')

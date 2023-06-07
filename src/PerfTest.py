@@ -122,10 +122,14 @@ class FioTest(PerfTest):
         command += " --alloc-size 98304 --allrandrepeat=1 --randseed=12345 --group_reporting=1"
         return command
 
+    def get_directory(self, config):
+        return config.get('main', 'directory')
+
     def test(self, run, config, results):
-        directory = config.get('main', 'directory')
+        directory = self.get_directory(config)
         command = self.default_cmd(results)
-        command += " --directory {} ".format(directory)
+        dir_opt = "opendir" if self.use_opendir else "directory"
+        command += f" --{dir_opt} {directory} "
         command += self.command
         utils.run_command(command)
 

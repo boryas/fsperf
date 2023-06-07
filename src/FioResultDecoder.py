@@ -39,6 +39,9 @@ class FioResultDecoder(json.JSONDecoder):
 
     def decode(self, json_string):
         """This does the dirty work of converting everything"""
+        # strip off random opendir noise if we used that option..
+        if json_string.startswith('fio: opendir'):
+            json_string = json_string.split('\n', 1)[1]
         default_obj = super(FioResultDecoder, self).decode(json_string)
         obj = {}
         obj['jobs'] = []

@@ -210,6 +210,7 @@ class LatencyTracing:
         self.fns = fns
 
     def start_latency_trace(self, fn):
+        print(f"start latency trace for {fn}")
         # this sets the max size of a map in bpftrace
         # in our case, this is a bound on the number of unique delays we trace
         os.environ["BPFTRACE_MAP_KEYS_MAX"] = "65536"
